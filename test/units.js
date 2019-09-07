@@ -26,10 +26,24 @@ const crosswordDataFormat = require( "../index.js" );
 
 test( 'basic module', assert => {
   assert.same({
-         msg: 'basic module export a ping fn',
+         msg: 'exports a ping fn',
       actual: crosswordDataFormat.hasOwnProperty('ping'),
     expected: true
   });
+  assert.same({
+         msg: 'ping fn returns pong',
+      actual: crosswordDataFormat.ping(),
+    expected: 'pong'
+  });
+})
+
+test( 'parse fn', assert => {
+  assert.same({
+         msg: 'exports a parse fn',
+      actual: crosswordDataFormat.hasOwnProperty('parse'),
+    expected: true
+  });
+
 })
 
 

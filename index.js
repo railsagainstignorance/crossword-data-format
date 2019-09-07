@@ -1,8 +1,11 @@
 'use strict'
 
-function ping () {
+function parse( text ){
 }
 
+function ping () { return 'pong'; }
+
 module.exports = {
-  ping
+  ping,
+  parse
 }
