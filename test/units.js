@@ -43,7 +43,15 @@ test( 'parse fn', assert => {
       actual: crosswordDataFormat.hasOwnProperty('parse'),
     expected: true
   });
+  {
+    const response = crosswordDataFormat.parse();
 
+    assert.same({
+           msg: 'returns an obj including non-empty errors list and isValid==false for no input',
+        actual: response && response.errors && response.errors.length>0 && response.hasOwnProperty('isValid') && !response.isValid,
+      expected: true
+    });
+  }
 })
 
 
