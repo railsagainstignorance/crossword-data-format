@@ -1,0 +1,5 @@
+# Another go at the marvelous new crossword data format
+
+## TDD all the way.
+
+`npm test`

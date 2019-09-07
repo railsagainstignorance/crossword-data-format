@@ -1,0 +1,12 @@
+{
+  "name": "ft",
+  "version": "1.0.0",
+  "description": "a parser and manipulator of a new crossword data format",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test/units.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
