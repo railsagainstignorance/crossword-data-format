@@ -72,15 +72,27 @@ test( 'crosswordDataFormat.parse fn', assert => {
       const missingHeader = specHeaders[i];
       const missingHeaderKey = missingHeader.split(':')[0];
       const specHeadersMissingOne = specHeaders.filter( h => h !== missingHeader );
-      const headerText = specHeadersMissingOne.join("\n");
-      const response = crosswordDataFormat.parse(headerText);
+      const headerTextMissingOne = specHeadersMissingOne.join("\n");
+      const response = crosswordDataFormat.parse(headerTextMissingOne);
       assert.same({
-             msg: `returns an obj including 1 error mentioning the header and isValid==false for a missing header: ${missingHeaderKey}`,
+             msg: `returns an obj including 1 error mentioning the header and isValid==false for a missing header key: ${missingHeaderKey}`,
           actual: response && response.errors && response.errors.length===1 && response.errors[0].match(`missing.+${missingHeaderKey}`)
                   && response.hasOwnProperty('isValid') && !response.isValid,
         expected: true,
          context: {response}
-      })
+      });
+
+      const duplicatedHeader = specHeaders[i];
+      const duplicatedHeaderKey = duplicatedHeader.split(':')[0];
+      const headerTextWithDuplicatedOne = specHeaders.join("\n") + "\n" + duplicatedHeader;
+      const response2 = crosswordDataFormat.parse(headerTextWithDuplicatedOne);
+      assert.same({
+             msg: `returns an obj including 1 error mentioning the header and isValid==false for a duplicated header key: ${duplicatedHeaderKey}`,
+          actual: response2 && response2.errors && response2.errors.length===1 && response2.errors[0].match(`duplicate.+${duplicatedHeaderKey}`)
+                  && response2.hasOwnProperty('isValid') && !response2.isValid,
+        expected: true,
+         context: {response2}
+      });
     }
 
     {
@@ -93,7 +105,6 @@ test( 'crosswordDataFormat.parse fn', assert => {
     }
   }
   {
-    // test for duplicated keys
     // test that the error messages mention the appropriate things, e.g. naming the missing key
     // test for list handling (i.e. across and down)
     // questions: do we allow upper case keys?

@@ -37,7 +37,9 @@ function scanYamlText( text, errors ){
       const value = matchedKeyValue[2].trimLeft();
       inList = false;
       if (permittedKeys.hasOwnProperty(key)) {
-        if( permittedKeys[key] === 'list' ){
+        if( foundItems.hasOwnProperty(key) ){
+          errors.push( `duplicate key, ${key}, found on line[${i}]='${line}'`);
+        } else if( permittedKeys[key] === 'list' ){
           if (value !== '') {
             errors.push(`unexpected text found after list key on line[${i}]='${line}'`);
           } else {
