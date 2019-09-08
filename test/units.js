@@ -69,33 +69,36 @@ test( 'crosswordDataFormat.parse fn', assert => {
       'down: '
     ];
     for (let i = 0; i < specHeaders.length; i++) {
-      const missingHeader = specHeaders[i];
-      const missingHeaderKey = missingHeader.split(':')[0];
-      const specHeadersMissingOne = specHeaders.filter( h => h !== missingHeader );
-      const headerTextMissingOne = specHeadersMissingOne.join("\n");
-      const response = crosswordDataFormat.parse(headerTextMissingOne);
-      assert.same({
-             msg: `returns an obj including 1 error mentioning the header and isValid==false for a missing header key: ${missingHeaderKey}`,
-          actual: response && response.errors && response.errors.length===1 && response.errors[0].match(`missing.+${missingHeaderKey}`)
-                  && response.hasOwnProperty('isValid') && !response.isValid,
-        expected: true,
-         context: {response}
-      });
-
-      const duplicatedHeader = specHeaders[i];
-      const duplicatedHeaderKey = duplicatedHeader.split(':')[0];
-      const headerTextWithDuplicatedOne = specHeaders.join("\n") + "\n" + duplicatedHeader;
-      const response2 = crosswordDataFormat.parse(headerTextWithDuplicatedOne);
-      assert.same({
-             msg: `returns an obj including 1 error mentioning the header and isValid==false for a duplicated header key: ${duplicatedHeaderKey}`,
-          actual: response2 && response2.errors && response2.errors.length===1 && response2.errors[0].match(`duplicate.+${duplicatedHeaderKey}`)
-                  && response2.hasOwnProperty('isValid') && !response2.isValid,
-        expected: true,
-         context: {response2}
-      });
+      { // check for missing header keys
+        const missingHeader = specHeaders[i];
+        const missingHeaderKey = missingHeader.split(':')[0];
+        const specHeadersMissingOne = specHeaders.filter( h => h !== missingHeader );
+        const headerTextMissingOne = specHeadersMissingOne.join("\n");
+        const response = crosswordDataFormat.parse(headerTextMissingOne);
+        assert.same({
+               msg: `returns an obj including 1 error mentioning the header and isValid==false for a missing header key: ${missingHeaderKey}`,
+            actual: response && response.errors && response.errors.length===1 && response.errors[0].match(`missing.+${missingHeaderKey}`)
+                    && response.hasOwnProperty('isValid') && !response.isValid,
+          expected: true,
+           context: {response}
+        });
+      }
+      { // check for duplicated headers keys
+        const duplicatedHeader = specHeaders[i];
+        const duplicatedHeaderKey = duplicatedHeader.split(':')[0];
+        const headerTextWithDuplicatedOne = specHeaders.join("\n") + "\n" + duplicatedHeader;
+        const response = crosswordDataFormat.parse(headerTextWithDuplicatedOne);
+        assert.same({
+               msg: `returns an obj including 1 error mentioning the header and isValid==false for a duplicated header key: ${duplicatedHeaderKey}`,
+            actual: response && response.errors && response.errors.length===1 && response.errors[0].match(`duplicate.+${duplicatedHeaderKey}`)
+                    && response.hasOwnProperty('isValid') && !response.isValid,
+          expected: true,
+           context: {response}
+        });
+      }
     }
 
-    {
+    { // check for a valid header
       const response = crosswordDataFormat.parse(specHeaders.join("\n"));
       assert.same({
              msg: `returns no errors and isValid==true for a valid header`,
