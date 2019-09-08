@@ -1,13 +1,23 @@
+///
 // Tiny unit test framework (via https://medium.com/javascript-scene/tdd-the-rite-way-53c9b46f45e3)
-const test = (component, fn, count = 1) => {
+///
+// specify
+// - componment string as the name of the test,
+// - the fn encapsulating all your asserts
+// - (optional) the starting number of the count
+// - (optional) the verbose flag to list all the oks even when there is no Error.
+///
+const test = (component, fn, count = 1, verbose=false) => {
   if (!component) { throw new Error(`Test Framework: Must specify a meaningful name for the set of tests`); }
-  console.log(`# ${ component }`);
+  console.log(`# testing '${ component }'`);
+  const oks = [];
   fn({
     same: ({actual, expected, msg, context}) => {
       if (!msg) { throw new Error(`Test Framework: Must specify a meaningful 'msg' for test ${count}`); }
       if (actual == expected) {
-        console.log(`ok ${ count } - ${ msg }`);
+        oks.push(`ok ${ count } - ${ msg }`);
       } else {
+        console.log( `${oks.join("\n")}` ); // display any previous successful tests as context
         const contextText = (context)? `context:\n    ${JSON.stringify(context)}` : '';
         throw new Error(
 `not ok ${ count } -  ${ msg }
@@ -22,6 +32,11 @@ const test = (component, fn, count = 1) => {
       count++;
     }
   });
+  console.log(` ok: ${oks.length} asserts`);
+  if (verbose) {
+    console.log( `${oks.join("\n")}`);
+  }
+  return count;
 };
 
 const crosswordDataFormat = require( "../index.js" );
@@ -66,7 +81,7 @@ test( 'crosswordDataFormat.parse fn', assert => {
       'pubdate: 2018/03/22',
       'size: 15x15',
       'across: ',
-      'down: '
+      'down: ',
     ];
     for (let i = 0; i < specHeaders.length; i++) {
       { // check for missing header keys
@@ -116,4 +131,4 @@ test( 'crosswordDataFormat.parse fn', assert => {
   {
     // questions: how do we establish that this is meant to be the particular format and version? Ans: give it a better name than 'standard'
   }
-})
+});

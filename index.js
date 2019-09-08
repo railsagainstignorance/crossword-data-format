@@ -38,10 +38,10 @@ function scanYamlText( text, errors ){
       inList = false;
       if (permittedKeys.hasOwnProperty(key)) {
         if( foundItems.hasOwnProperty(key) ){
-          errors.push( `duplicate key, ${key}, found on line[${i}]='${line}'`);
+          errors.push( `duplicate key, ${key}, found in line[${i}]='${line}'`);
         } else if( permittedKeys[key] === 'list' ){
           if (value !== '') {
-            errors.push(`unexpected text found after list key on line[${i}]='${line}'`);
+            errors.push(`unexpected text found after list key in line[${i}]='${line}'`);
           } else {
             inList = true;
             currentList = [];
@@ -51,19 +51,17 @@ function scanYamlText( text, errors ){
           foundItems[key] = value;
         }
       } else {
-        errors.push(`could not parse line[${i}]='${line}'`);
+        errors.push(`unrecognised key, '${key}', in line[${i}]='${line}'`);
       }
-    } else { // must be inList
-      if (!inList) {
-        errors.push(`expecting non-list item in line[${i}]='${line}'`);
+    } else if (inList){
+      const matchedListItem = line.match(/^- (.+)$/);
+      if (matchedListItem) {
+        currentList.push( matchedListItem[1] );
       } else {
-          const matchedListItem = line.match(/^- (.+)$/);
-          if (matchedListItem) {
-            currentList.push( matchedListItem[1] );
-          } else {
-            errors.push(`could not parse as list item: line[${i}]='${line}'`);
-          }
+        errors.push(`could not parse as list item: line[${i}]='${line}'`);
       }
+    } else {
+      errors.push(`no key specified and cannot be a list item, in line[${i}]='${line}'`);
     }
   })
 
