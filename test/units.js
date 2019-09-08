@@ -3,18 +3,20 @@ const test = (component, fn, count = 1) => {
   if (!component) { throw new Error(`Test Framework: Must specify a meaningful name for the set of tests`); }
   console.log(`# ${ component }`);
   fn({
-    same: ({actual, expected, msg}) => {
+    same: ({actual, expected, msg, context}) => {
       if (!msg) { throw new Error(`Test Framework: Must specify a meaningful 'msg' for test ${count}`); }
       if (actual == expected) {
         console.log(`ok ${ count } - ${ msg }`);
       } else {
+        const contextText = (context)? `context:\n    ${JSON.stringify(context)}` : '';
         throw new Error(
-    `not ok ${ count } -  ${ msg }
-      expected:
-        ${ expected }
-      actual:
-        ${ actual }
-    `
+`not ok ${ count } -  ${ msg }
+  expected:
+    ${ expected }
+  actual:
+    ${ actual }
+  ${ contextText }
+`
         );
       }
       count++;
@@ -47,8 +49,9 @@ test( 'crosswordDataFormat.parse fn', assert => {
     const response = crosswordDataFormat.parse();
 
     assert.same({
-           msg: 'returns an obj including non-empty errors list and isValid==false for no input',
-        actual: response && response.errors && response.errors.length>0 && response.hasOwnProperty('isValid') && !response.isValid,
+           msg: 'returns an obj including 1 error mentioning "No text" and isValid==false for no input',
+        actual: response && response.errors && response.errors.length==1 && response.errors[0].match(/No text/)
+                && response.hasOwnProperty('isValid') && !response.isValid,
       expected: true
     });
   }
@@ -67,13 +70,16 @@ test( 'crosswordDataFormat.parse fn', assert => {
     ];
     for (let i = 0; i < specHeaders.length; i++) {
       const missingHeader = specHeaders[i];
+      const missingHeaderKey = missingHeader.split(':')[0];
       const specHeadersMissingOne = specHeaders.filter( h => h !== missingHeader );
       const headerText = specHeadersMissingOne.join("\n");
       const response = crosswordDataFormat.parse(headerText);
       assert.same({
-             msg: `returns an obj including non-empty errors list and isValid==false for a missing header: ${specHeaders[i]}`,
-          actual: response && response.errors && response.errors.length>0 && response.hasOwnProperty('isValid') && !response.isValid,
-        expected: true
+             msg: `returns an obj including 1 error mentioning the header and isValid==false for a missing header: ${missingHeaderKey}`,
+          actual: response && response.errors && response.errors.length===1 && response.errors[0].match(`missing.+${missingHeaderKey}`)
+                  && response.hasOwnProperty('isValid') && !response.isValid,
+        expected: true,
+         context: {response}
       })
     }
 
@@ -87,6 +93,10 @@ test( 'crosswordDataFormat.parse fn', assert => {
     }
   }
   {
+    // test for duplicated keys
+    // test that the error messages mention the appropriate things, e.g. naming the missing key
     // test for list handling (i.e. across and down)
+    // questions: do we allow upper case keys?
+    // questions: how do we establish that this is meant to be the particular format and version? Ans: give it a better name than 'standard'
   }
 })
