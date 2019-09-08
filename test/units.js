@@ -37,7 +37,7 @@ test( 'basic module', assert => {
   });
 })
 
-test( 'parse fn', assert => {
+test( 'crosswordDataFormat.parse fn', assert => {
   assert.same({
          msg: 'exports a parse fn',
       actual: crosswordDataFormat.hasOwnProperty('parse'),
@@ -52,39 +52,41 @@ test( 'parse fn', assert => {
       expected: true
     });
   }
+  {
+    const specHeaders = [
+      'version: standard v2',
+      'name: Crossword 15813',
+      'author: Falcon',
+      'editor: Colin Inman',
+      'copyright: 2018, Financial Times',
+      'publisher: Financial Times',
+      'pubdate: 2018/03/22',
+      'size: 15x15',
+      'across: ',
+      'down: '
+    ];
+    for (let i = 0; i < specHeaders.length; i++) {
+      const missingHeader = specHeaders[i];
+      const specHeadersMissingOne = specHeaders.filter( h => h !== missingHeader );
+      const headerText = specHeadersMissingOne.join("\n");
+      const response = crosswordDataFormat.parse(headerText);
+      assert.same({
+             msg: `returns an obj including non-empty errors list and isValid==false for a missing header: ${specHeaders[i]}`,
+          actual: response && response.errors && response.errors.length>0 && response.hasOwnProperty('isValid') && !response.isValid,
+        expected: true
+      })
+    }
+
+    {
+      const response = crosswordDataFormat.parse(specHeaders.join("\n"));
+      assert.same({
+             msg: `returns no errors and isValid==true for a valid header`,
+          actual: response && response.errors && response.errors.length===0 && response.hasOwnProperty('isValid') && response.isValid,
+        expected: true
+      });
+    }
+  }
+  {
+    // test for list handling (i.e. across and down)
+  }
 })
-
-
-// // Something to test
-// const double = x => x * 2;
-//
-// // A test suite
-// test('double', assert => {
-//   {
-//     const msg = 'double() should take a number x and return the product of x and 2';
-//
-//     const actual = double(4);
-//     const expected = 8;
-//
-//     assert.same(actual, expected, msg);
-//   }
-//
-//   {
-//     const msg = 'double() should return NaN for non-numbers';
-//
-//     const actual = isNaN(double('puppy'));
-//     const expected = true;
-//
-//     assert.same(actual, expected, msg);
-//   }
-//
-//   // failing test
-//   {
-//     const msg = 'false should be true?';
-//
-//     const actual = false;
-//     const expected = true;
-//
-//     assert.same(actual, expected, msg);
-//   }
-// });
