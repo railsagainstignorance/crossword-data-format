@@ -83,7 +83,7 @@ test( 'crosswordDataFormat.parse fn', assert => {
            context: {response}
         });
       }
-      { // check for duplicated headers keys
+      { // check for duplicated header keys
         const duplicatedHeader = specHeaders[i];
         const duplicatedHeaderKey = duplicatedHeader.split(':')[0];
         const headerTextWithDuplicatedOne = specHeaders.join("\n") + "\n" + duplicatedHeader;
@@ -108,9 +108,12 @@ test( 'crosswordDataFormat.parse fn', assert => {
     }
   }
   {
-    // test that the error messages mention the appropriate things, e.g. naming the missing key
     // test for list handling (i.e. across and down)
+  }
+  {
     // questions: do we allow upper case keys?
+  }
+  {
     // questions: how do we establish that this is meant to be the particular format and version? Ans: give it a better name than 'standard'
   }
 })
