@@ -54,7 +54,7 @@ function scanYamlText( text, errors ){
         errors.push(`unrecognised key, '${key}', in line[${i}]='${line}'`);
       }
     } else if (inList){
-      const matchedListItem = line.match(/^- (.+)$/);
+      const matchedListItem = line.match(/^(\- .+)$/);
       if (matchedListItem) {
         currentList.push( matchedListItem[1] );
       } else {
@@ -74,6 +74,70 @@ function scanYamlText( text, errors ){
 }
 
 ///
+// Take the raw list of lines for each of across and down, and the raw size, and parse them.
+// E.g. - (1,1) 1. Tries during proper practice session (9)
+// Just do enough to check we have the main bits.
+// Save all the detailed validation for later.
+// So, just ensure we have a sequence of clues for each direction.
+// Don't process the full idsText or answertext.
+///
+//const clueRegex = /^- \((\d+),(\d+)\) (\d+(?:[,\-]\d+(?:across|down)?))\. (.+) \(([^\)]+)\)$/; // x,y,ids,text,answer
+const clueRegex = /^- \((\d+),(\d+)\) (\d+)\. (.+) \((\d+)\)$/; // x,y,ids,text,answer
+function parseAcrossAndDownLines( acrossList, downList, sizeText, errors ){
+  const clues = {}; // [id] = { across: ..., down: ...}
+
+  // TBD
+  // - parse and validate sizeText
+
+  [ ['across', acrossList], ['down', downList] ].forEach( directionPair => {
+    const [direction, clueTexts] = directionPair;
+    clueTexts.forEach( (clueText, c) => {
+      const matchedClue = clueText.match( clueRegex );
+      if (!matchedClue) {
+        errors.push(`could not parse ${direction} clue[${c}], in line='${clueText}'`);
+      } else {
+        const [,xText,yText,idsText,bodyText,answerText] = matchedClue;
+        // TBD
+        // - parse and validate ids
+        // - parse and validate answer
+        // - start with plucking off first id of ids
+        // - check clueId sequence is valid
+        // - create template if new clue
+        // - update direction-specific aspect of clue
+        // - check x,y fall within size
+
+        const id = idsText.split(/\D+/)[0];
+        if (!clues.hasOwnProperty(id)) {
+          clues[id] = {};
+        }
+        if( clues.hasOwnProperty(direction) ){
+          errors.push(`duplicate ${direction} for clue[${c}], in line='${clueText}'`);
+        } else {
+          clues[id][direction] = {};
+          clues[id][direction].raw = {
+            xText,
+            yText,
+            idsText,
+            bodyText,
+            answerText,
+            clueText,
+            clueTextSequenceId : c
+          }
+        }
+      }
+    });
+  });
+
+  const integerIds = Object.keys( clues ).map( id => parseInt(id,10) ).sort((a,b) => a-b);
+  // check the list is contiguous
+  const parsedClues = {
+    clues,
+    largestClueId : integerIds[integerIds.length -1],
+  }
+  return parsedClues;
+}
+
+///
 // embellishes the parsing obj as the parsing procedes,
 // returns when there is a fatal error with the parsing
 ///
@@ -86,6 +150,10 @@ function innerParse( parsing ){
   // lots more parsing goes on in here
   const foundItems = scanYamlText( parsing.text, parsing.errors );
   Object.assign( parsing, foundItems );
+  if (parsing.errors.length === 0) {
+    const foundClues = parseAcrossAndDownLines( parsing.across, parsing.down, parsing.size, parsing.errors );
+    Object.assign( parsing, foundClues );
+  }
 
   return parsing;
 }

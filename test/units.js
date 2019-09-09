@@ -52,7 +52,7 @@ const test = (component, fn, verbose=false) => {
         oks.push(`ok ${ count } - ${ msg }`);
       } else {
         console.log( `${oks.join("\n")}` ); // display any previous successful tests as context
-        const contextText = (context)? `context:\n    ${JSON.stringify(context)}` : '';
+        const contextText = (context)? `context:\n    ${JSON.stringify(context, null, 2)}` : '';
         throw new Error(
 `not ok ${ count } - ${ msg }
   expected:
@@ -88,7 +88,7 @@ test( 'basic module', assert => {
   });
 })
 
-test( 'crosswordDataFormat.parse fn', assert => {
+test( 'crosswordDataFormat.parse fn - basic header keys', assert => {
   assert.same({
          msg: 'exports a parse fn',
       actual: crosswordDataFormat.hasOwnProperty('parse'),
@@ -157,12 +157,59 @@ test( 'crosswordDataFormat.parse fn', assert => {
     }
   }
   {
-    // test for list handling (i.e. across and down)
-  }
-  {
     // questions: do we allow upper case keys?
+    // questions: do we insist across comes before down? Should not affect final crossword. But, TRADITION !!!
   }
   {
     // questions: how do we establish that this is meant to be the particular format and version? Ans: give it a better name than 'standard'
+  }
+  {
+    // test we offer a spec defining the format
+  }
+});
+
+test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', assert => {
+  const specHeadersMinusAcrossAndDown = [
+    'version: standard v2',
+    'name: Crossword 15813',
+    'author: Falcon',
+    'editor: Colin Inman',
+    'copyright: 2018, Financial Times',
+    'publisher: Financial Times',
+    'pubdate: 2018/03/22',
+    'size: 15x15',
+  ];
+  // minus
+  // 'across:',
+  // 'down:'
+
+  {
+    const acrossLines = [
+      '- (1,1) 1. Tries during proper practice session (9)',
+    ]
+
+    const headerLines = specHeadersMinusAcrossAndDown
+    .concat(['across:'])
+    .concat( acrossLines )
+    .concat(['down:']);
+
+    {
+      const response = crosswordDataFormat.parse(headerLines.join("\n"));
+      assert.same({
+             msg: `returns no errors and isValid==true for a valid header containing a simple across clue`,
+          actual: response && response.errors && response.errors.length===0 && response.hasOwnProperty('isValid') && response.isValid,
+        expected: true,
+         context: {response}
+      });
+    }
+    {
+      const response = crosswordDataFormat.parse(headerLines.join("\n"));
+      assert.same({
+             msg: `returns largestClueId==1 for a valid header containing a simple across clue`,
+          actual: response && response.errors && response.errors.length===0 && response.hasOwnProperty('largestClueId') && response.largestClueId===1,
+        expected: true,
+         context: {response}
+      });
+    }
   }
 });
