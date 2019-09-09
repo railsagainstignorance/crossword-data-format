@@ -1,15 +1,49 @@
 ///
 // Tiny unit test framework (via https://medium.com/javascript-scene/tdd-the-rite-way-53c9b46f45e3)
+// Loving it's tinyness and see-it-all-at-once-ness.
+//
+// In the post, Eric Elliott describes "TDD the RITE Way", where the acronym RITE stands for
+// - Readable
+// - Isolated OR Integrated
+// - Thorough
+// - Explicit
+//
+// I suspect I am abusing the 'I' aspect, and perhaps also the 'R'.
 ///
-// specify
-// - componment string as the name of the test,
-// - the fn encapsulating all your asserts
-// - (optional) the starting number of the count
-// - (optional) the verbose flag to list all the oks even when there is no Error.
+// Will be interesting to see how much I fiddle with the framework and if I can keep it tiny
+// - added insistence that test()'s component is set properly.
+// - added insistence that assert.same()'s msg is set properly.
+// - added vebose option to test(), with default to just log a count of all the oks if there is no Error,
+//    e.g.
+//       # testing 'basic module'
+//        ok: 2 asserts
+//       # testing 'crosswordDataFormat.parse fn'
+//        ok: 23 asserts
+// - removed count as a test() input param. Can't see why I'd ever need this. Now declared within test().
+// - returning count from test(), so the overall count of tests can be totted up later.
+// - tweaked some of the logging formatting.
+// - stuck (so far) with just assert's same() option but...
+//    have gone for long concatenations of && phrases in the 'actual' (instead of multiple calls to assert.same),
+//    which means some ambiguity as to which failed phrase triggered an Error, so...
+// - added context to same(), for extra info when displaying an error (stringified but not formatted - maybe later).
+// - refactored same() to receive a single obj, {actual, expected, msg, context}, rather than separate params. looks neater, more concise.
 ///
-const test = (component, fn, count = 1, verbose=false) => {
+// to use test(), specify
+// - componment - a string as the name of the test,
+// -  fn - encapsulating all your asserts
+// - verbose (optional flag, default=false) - to explicitly list all the oks even when there is no Error.
+///
+// to use assert.same(), specify
+// - {actual, expected, msg, context} - an obj, where
+// -- actual - the value 'actually' returned in the test
+// -- expected - the target value (and same() checks if actual === expected)
+// -- msg (non-optional) - the text which names/describes the purpose of this specific test
+// -- context (optional) - extra info to display if actual !== expected
+///
+const test = (component, fn, verbose=false) => {
   if (!component) { throw new Error(`Test Framework: Must specify a meaningful name for the set of tests`); }
   console.log(`# testing '${ component }'`);
+  let count = 1;
   const oks = [];
   fn({
     same: ({actual, expected, msg, context}) => {
@@ -20,7 +54,7 @@ const test = (component, fn, count = 1, verbose=false) => {
         console.log( `${oks.join("\n")}` ); // display any previous successful tests as context
         const contextText = (context)? `context:\n    ${JSON.stringify(context)}` : '';
         throw new Error(
-`not ok ${ count } -  ${ msg }
+`not ok ${ count } - ${ msg }
   expected:
     ${ expected }
   actual:
@@ -36,7 +70,7 @@ const test = (component, fn, count = 1, verbose=false) => {
   if (verbose) {
     console.log( `${oks.join("\n")}`);
   }
-  return count;
+  return count-1;
 };
 
 const crosswordDataFormat = require( "../index.js" );
