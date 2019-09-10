@@ -74,47 +74,50 @@ function scanYamlText( text, errors ){
 }
 
 ///
-// Take the raw list of lines for each of across and down, and the raw size, and parse them.
-// E.g. - (1,1) 1. Tries during proper practice session (9)
-// Just do enough to check we have the main bits.
+// Take the raw list of lines for each of across and down and parse them.
+// Just do enough to check we have the main phrases and establish the id of each clue.
 // Save all the detailed validation for later.
-// So, just ensure we have a sequence of clues for each direction.
-// Don't process the full idsText or answertext.
+// E.g. - (1,1) 1. Tries during proper practice session (9)
+//   gives us: (x, y) clue ids and connectors. clue body text, (answer text)    
+// Just ensure we have a sequence of clues for each direction, which fit the basic pattern, with no duplications.
+// Still TBD
+// - flesh out regex to handle all clue possibilities
+// - could refactor forEach to for, to allow immediate exit from the loops when the first error occurs
+// (in later fns)
+// - parse and validate sizeText
+// - parse and validate ids
+// - parse and validate answer
+// - check clueId sequence is valid
+// - create template if new clue
+// - update direction-specific aspect of clue
+// - check x,y fall within size
+// - check full length of answer fits within size
+// - check the clue ids are contiguous
 ///
 //const clueRegex = /^- \((\d+),(\d+)\) (\d+(?:[,\-]\d+(?:across|down)?))\. (.+) \(([^\)]+)\)$/; // x,y,ids,text,answer
 const clueRegex = /^- \((\d+),(\d+)\) (\d+)\. (.+) \((\d+)\)$/; // x,y,ids,text,answer
-function parseAcrossAndDownLines( acrossList, downList, sizeText, errors ){
-  const clues = {}; // [id] = { across: ..., down: ...}
+function parseAcrossAndDownLines( acrossList, downList, errors ){
+  const clues = {}; // [id] = { across: {}, down: {}}. Every clue possibly has an across and a down.
 
-  // TBD
-  // - parse and validate sizeText
-
+  // loop over the across list and the down list
   [ ['across', acrossList], ['down', downList] ].forEach( directionPair => {
     const [direction, clueTexts] = directionPair;
+    // loop over the clues for this direction
     clueTexts.forEach( (clueText, c) => {
       const matchedClue = clueText.match( clueRegex );
       if (!matchedClue) {
         errors.push(`could not parse ${direction} clue[${c}], in line='${clueText}'`);
       } else {
         const [,xText,yText,idsText,bodyText,answerText] = matchedClue;
-        // TBD
-        // - parse and validate ids
-        // - parse and validate answer
-        // - start with plucking off first id of ids
-        // - check clueId sequence is valid
-        // - create template if new clue
-        // - update direction-specific aspect of clue
-        // - check x,y fall within size
-
         const id = idsText.split(/\D+/)[0];
         if (!clues.hasOwnProperty(id)) {
-          clues[id] = {};
+          clues[id] = {}; // NB, the id is converted to a string when used as an object key.
         }
         if( clues.hasOwnProperty(direction) ){
           errors.push(`duplicate ${direction} for clue[${c}], in line='${clueText}'`);
         } else {
           clues[id][direction] = {};
-          clues[id][direction].raw = {
+          clues[id][direction].raw = { // place the raw values here for later parsing/checking
             xText,
             yText,
             idsText,
@@ -129,12 +132,11 @@ function parseAcrossAndDownLines( acrossList, downList, sizeText, errors ){
   });
 
   const integerIds = Object.keys( clues ).map( id => parseInt(id,10) ).sort((a,b) => a-b);
-  // check the list is contiguous
-  const parsedClues = {
+  const largestClueIdInt = integerIds[integerIds.length -1];
+  return {
     clues,
-    largestClueId : integerIds[integerIds.length -1],
-  }
-  return parsedClues;
+    largestClueId : largestClueIdInt.toString(), // NB: clueId is a string (because Object keys).
+  };
 }
 
 ///
@@ -151,7 +153,7 @@ function innerParse( parsing ){
   const foundItems = scanYamlText( parsing.text, parsing.errors );
   Object.assign( parsing, foundItems );
   if (parsing.errors.length === 0) {
-    const foundClues = parseAcrossAndDownLines( parsing.across, parsing.down, parsing.size, parsing.errors );
+    const foundClues = parseAcrossAndDownLines( parsing.across, parsing.down, parsing.errors );
     Object.assign( parsing, foundClues );
   }
 
