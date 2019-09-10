@@ -25,12 +25,12 @@
 // - stuck (so far) with just assert's same() option but...
 //    have gone for long concatenations of && phrases in the 'actual' (instead of multiple calls to assert.same),
 //    which means some ambiguity as to which failed phrase triggered an Error, so...
-// - added context to same(), for extra info when displaying an error (stringified but not formatted - maybe later).
+// - added context to same(), for extra info when displaying an error (stringified and formatted).
 // - refactored same() to receive a single obj, {actual, expected, msg, context}, rather than separate params. looks neater, more concise.
 ///
 // to use test(), specify
 // - componment - a string as the name of the test,
-// -  fn - encapsulating all your asserts
+// - fn - encapsulating all your asserts
 // - verbose (optional flag, default=false) - to explicitly list all the oks even when there is no Error.
 ///
 // to use assert.same(), specify
@@ -51,7 +51,7 @@ const test = (component, fn, verbose=false) => {
       if (actual == expected) {
         oks.push(`ok ${ count } - ${ msg }`);
       } else {
-        console.log( `${oks.join("\n")}` ); // display any previous successful tests as context
+        if( !verbose ){ console.log( `${oks.join("\n")}` ); }// display any previous successful tests as context, if we haven't already done so
         const contextText = (context)? `context:\n    ${JSON.stringify(context, null, 2)}` : '';
         throw new Error(
 `not ok ${ count } - ${ msg }
