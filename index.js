@@ -78,7 +78,7 @@ function scanYamlText( text, errors ){
 // Just do enough to check we have the main phrases and establish the id of each clue.
 // Save all the detailed validation for later.
 // E.g. - (1,1) 1. Tries during proper practice session (9)
-//   gives us: (x, y) clue ids and connectors. clue body text, (answer text)    
+//   gives us: (x, y) clue ids and connectors. clue body text, (answer text)
 // Just ensure we have a sequence of clues for each direction, which fit the basic pattern, with no duplications.
 // Still TBD
 // - flesh out regex to handle all clue possibilities
@@ -133,9 +133,10 @@ function parseAcrossAndDownLines( acrossList, downList, errors ){
 
   const integerIds = Object.keys( clues ).map( id => parseInt(id,10) ).sort((a,b) => a-b);
   const largestClueIdInt = integerIds[integerIds.length -1];
+  const largestClueId = (integerIds.length > 0)? largestClueIdInt.toString() : '0';
   return {
     clues,
-    largestClueId : largestClueIdInt.toString(), // NB: clueId is a string (because Object keys).
+    largestClueId, // NB: clueId is a string (because Object keys).
   };
 }
 

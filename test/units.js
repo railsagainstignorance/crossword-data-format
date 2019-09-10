@@ -184,13 +184,9 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
   // 'down:'
 
   {
-    const acrossLines = [
-      '- (1,1) 1. Tries during proper practice session (9)',
-    ]
-
     const headerLines = specHeadersMinusAcrossAndDown
     .concat(['across:'])
-    .concat( acrossLines )
+    .concat(['- (1,1) 1. Tries during proper practice session (9)'])
     .concat(['down:']);
 
     {
@@ -206,7 +202,23 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
       const response = crosswordDataFormat.parse(headerLines.join("\n"));
       assert.same({
              msg: `returns largestClueId==1 for a valid header containing a simple across clue`,
-          actual: response && response.errors && response.errors.length===0 && response.hasOwnProperty('largestClueId') && response.largestClueId===1,
+          actual: response && response.errors && response.errors.length===0 && response.hasOwnProperty('largestClueId') && response.largestClueId==='1',
+        expected: true,
+         context: {response}
+      });
+    }
+  }
+  {
+    {
+      const headerLines = specHeadersMinusAcrossAndDown
+      .concat(['across:'])
+      .concat(['- (1,1) 1. Tries during proper practice session (9)'])
+      .concat(['down:'])
+      .concat(['- (1,3) 2. Tries during proper practice session (9)']);
+      const response = crosswordDataFormat.parse(headerLines.join("\n"));
+      assert.same({
+             msg: `returns largestClueId==2 for a valid header containing one simple across clue and one simple down clues`,
+          actual: response && response.errors && response.errors.length===0 && response.hasOwnProperty('largestClueId') && response.largestClueId==='2',
         expected: true,
          context: {response}
       });
