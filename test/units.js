@@ -159,8 +159,20 @@ test( 'crosswordDataFormat.parse fn - basic header keys', assert => {
       const response = crosswordDataFormat.parse(specHeaders.join("\n"));
       assert.same({
              msg: `returns no errors and isValid==true for a valid header`,
-          actual: response && response.errors && response.errors.length===0 && response.hasOwnProperty('isValid') && response.isValid,
+          actual: response && response.errors && response.errors.length===0
+               && response.hasOwnProperty('isValid') && response.isValid,
         expected: true
+      });
+    }
+    { // check for a valid size
+      const response = crosswordDataFormat.parse(specHeaders.join("\n"));
+      assert.same({
+             msg: `returns no errors and isValid==true for a valid header and size.across==15 and size.down==15`,
+          actual: response && response.errors && response.errors.length===0
+               && response.hasOwnProperty('isValid') && response.isValid
+               && response.dimensions && response.dimensions.across===15 && response.dimensions.down===15,
+        expected: true,
+         context: {response},
       });
     }
   }

@@ -15,7 +15,7 @@ const permittedKeys = { // mapped to their type
 
 const answerSeparators = ',-|'.split();
 const escapedAnswerSeparators = ',\-\|'.split();
-const clueRegexComponents = [ // all backslashes escaped; to be separated by spaces 
+const clueRegexComponents = [ // all backslashes escaped; to be separated by spaces
   `-`,                                                // standard YAML list element indicator
   `\\((\\d+),(\\d+)\\)`,                              // x,y
   `(\\d+(?:,\\d+(?:\\s*(?:across|down)))*)\\.`,       // ids
@@ -23,6 +23,7 @@ const clueRegexComponents = [ // all backslashes escaped; to be separated by spa
   `\\((\\d+(?:[${escapedAnswerSeparators}]\\d+)*)\\)` // answer
 ];
 const clueRegex = new RegExp( '^' + clueRegexComponents.join('\\s+') + '$' );
+const sizeRegex = /^(\d+)x(\d+)$/;
 
 const spec = {
   description: [
@@ -32,10 +33,12 @@ const spec = {
     permittedKeys    : `Which key/value pairs are allowed, and the value's type`,
     answerSeparators : `How the different words in the answer are combined, where ',' means space-separated, '|' means contiguous, '-' means hyphenated`,
     clueRegex        : 'The pattern used to parse each clue',
+    sizeRegex        : 'The pattern used to parse the size attribute (across integer x down integer)',
   },
   permittedKeys,
   answerSeparators,
   clueRegex : clueRegex.toString(),
+  sizeRegex : sizeRegex.toString(),
 }
 
 ///
@@ -44,7 +47,7 @@ const spec = {
 // no attempt made to parse the list items (other than to gather them into lists),
 // accumulating errors as we go,
 // checking that we have found *all* the keys we were looking for,
-// returning a list of errors and the list of found key/values.
+// modifying a list of errors and returning the list of found key/values.
 // A non-empty list of errors means the scan has failed.
 ///
 function scanYamlText( text, errors ){
@@ -165,6 +168,25 @@ function parseAcrossAndDownLines( acrossList, downList, errors ){
 }
 
 ///
+//
+///
+
+function parseSize( sizeText, errors ){
+  const sizeComponents = {
+    dimensions: {}
+  };
+  const matchedSize = sizeText.match( sizeRegex );
+  if (matchedSize) {
+    sizeComponents.dimensions.across = parseInt(matchedSize[1],10);
+    sizeComponents.dimensions.down   = parseInt(matchedSize[2],10);
+  } else {
+    errors.push( `could not parse size from text='${sizeText}'`)
+  }
+
+  return sizeComponents;
+}
+
+///
 // embellishes the parsing obj as the parsing procedes,
 // returns when there is a fatal error with the parsing
 ///
@@ -177,10 +199,15 @@ function innerParse( parsing ){
   // lots more parsing goes on in here
   const foundItems = scanYamlText( parsing.text, parsing.errors );
   Object.assign( parsing, foundItems );
-  if (parsing.errors.length === 0) {
-    const foundClues = parseAcrossAndDownLines( parsing.across, parsing.down, parsing.errors );
-    Object.assign( parsing, foundClues );
-  }
+  if (parsing.errors.length !== 0) { return parsing; }
+
+  const foundClues = parseAcrossAndDownLines( parsing.across, parsing.down, parsing.errors );
+  Object.assign( parsing, foundClues );
+  if (parsing.errors.length !== 0) { return parsing; }
+
+  const parsedSize = parseSize( parsing.size, parsing.errors );
+  Object.assign( parsing, parsedSize );
+  if (parsing.errors.length !== 0) { return parsing; }
 
   return parsing;
 }
