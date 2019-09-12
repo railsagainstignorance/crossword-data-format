@@ -29,7 +29,7 @@
 // - refactored same() to receive a single obj, {actual, expected, msg, context}, rather than separate params. looks neater, more concise.
 ///
 // to use test(), specify
-// - componment - a string as the name of the test,
+// - component - a string as the name of the test,
 // - fn - encapsulating all your asserts
 // - verbose (optional flag, default=false) - to explicitly list all the oks even when there is no Error.
 ///
@@ -85,6 +85,14 @@ test( 'basic module', assert => {
          msg: 'ping fn returns pong',
       actual: crosswordDataFormat.ping(),
     expected: 'pong'
+  });
+})
+
+test( 'spec', assert => {
+  assert.same({
+         msg: 'exports a spec object',
+      actual: crosswordDataFormat.hasOwnProperty('spec'),
+    expected: true
   });
 })
 
@@ -253,19 +261,22 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
     });
   }
   {
-    const headerLines = specHeadersMinusAcrossAndDown
-    .concat(['across:'])
-    .concat(['- (1,1) 1,2 across,3 across. An Across clue (5,4,3)'])
-    .concat(['down:'])
-    .concat(['- (1,3) 2. See 1 Down (4)'])
-    .concat(['- (1,5) 3. See 1 Down (3)']);
-    const response = crosswordDataFormat.parse(headerLines.join("\n"));
-    assert.same({
-           msg: `returns largestClueId==3 for a valid header containing one across clue combining with two down clues combined to a multi word answer`,
-        actual: response && response.errors && response.errors.length===0 && response.hasOwnProperty('largestClueId') && response.largestClueId==='3',
-      expected: true,
-       context: {response}
-    });
+    ",-|".split('').forEach( s => {
+      const headerLines = specHeadersMinusAcrossAndDown
+      .concat(['across:'])
+      .concat([`- (1,1) 1,2 across,3 across. An Across clue (5${s}4${s}3)`])
+      .concat(['down:'])
+      .concat(['- (1,3) 2. See 1 Down (4)'])
+      .concat(['- (1,5) 3. See 1 Down (3)']);
+      const response = crosswordDataFormat.parse(headerLines.join("\n"));
+      assert.same({
+             msg: `returns largestClueId==3 for a valid header containing one across clue combining with two down clues combined to a multi word answer with separator '${s}'`,
+          actual: response && response.errors && response.errors.length===0 && response.hasOwnProperty('largestClueId') && response.largestClueId==='3',
+        expected: true,
+         context: {response}
+      });
+
+    })
   }
   // check for other separators e.g. -,|, etc
 

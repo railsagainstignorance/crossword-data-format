@@ -13,6 +13,31 @@ const permittedKeys = { // mapped to their type
   down: 'list'
 }
 
+const answerSeparators = ',-|'.split();
+const escapedAnswerSeparators = ',\-\|'.split();
+const clueRegexComponents = [ // all backslashes escaped; to be separated by spaces 
+  `-`,                                                // standard YAML list element indicator
+  `\\((\\d+),(\\d+)\\)`,                              // x,y
+  `(\\d+(?:,\\d+(?:\\s*(?:across|down)))*)\\.`,       // ids
+  `(.+)`,                                             // text
+  `\\((\\d+(?:[${escapedAnswerSeparators}]\\d+)*)\\)` // answer
+];
+const clueRegex = new RegExp( '^' + clueRegexComponents.join('\\s+') + '$' );
+
+const spec = {
+  description: [
+    "This spec describes a crossword data format, based on YAML, intended to easy to read yet capable of encompassing all(ish) know aspects of standard crosswords.",
+  ],
+  definitions : {
+    permittedKeys    : `Which key/value pairs are allowed, and the value's type`,
+    answerSeparators : `How the different words in the answer are combined, where ',' means space-separated, '|' means contiguous, '-' means hyphenated`,
+    clueRegex        : 'The pattern used to parse each clue',
+  },
+  permittedKeys,
+  answerSeparators,
+  clueRegex : clueRegex.toString(),
+}
+
 ///
 // simple scan of the text, split into lines by \n,
 // looking for known key/value pairs or key/lists,
@@ -94,8 +119,7 @@ function scanYamlText( text, errors ){
 // - check full length of answer fits within size
 // - check the clue ids are contiguous
 ///
-//const clueRegex = /^- \((\d+),(\d+)\) (\d+(?:[,\-]\d+(?:across|down)?))\. (.+) \(([^\)]+)\)$/; // x,y,ids,text,answer
-const clueRegex = /^- \((\d+),(\d+)\) (\d+(?:[,\-]\d+(?:\s*(?:across|down)))*)\. (.+) \((\d+(?:[,\|\-]\d+)*)\)$/; // x,y,ids,text,answer
+
 function parseAcrossAndDownLines( acrossList, downList, errors ){
   const clues = {}; // [id] = { across: {}, down: {}}. Every clue possibly has an across and a down.
 
@@ -167,7 +191,8 @@ function innerParse( parsing ){
 function parse( text='' ){
   const parsing = {
     errors : [],
-    text
+    text,
+    spec
   }
   innerParse( parsing );
   parsing.isValid = (parsing.errors.length == 0); // no errors means isValid
@@ -178,5 +203,6 @@ function ping () { return 'pong'; }
 
 module.exports = {
   ping,
-  parse
+  parse,
+  spec
 }
