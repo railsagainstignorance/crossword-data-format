@@ -15,15 +15,17 @@ const permittedKeys = { // mapped to their type
 
 const answerSeparators = ',-|'.split();
 const escapedAnswerSeparators = ',\-\|'.split();
+const idsRegexComponent = `(\\d+(?:,\\d+(?:\\s*(?:across|down)))*)\\.`;
 const clueRegexComponents = [ // all backslashes escaped; to be separated by spaces
   `-`,                                                // standard YAML list element indicator
-  `\\((\\d+),(\\d+)\\)`,                              // x,y
-  `(\\d+(?:,\\d+(?:\\s*(?:across|down)))*)\\.`,       // ids
+  `\\((\\d+),(\\d+)\\)`,                              // across, down
+  idsRegexComponent,                                  // ids
   `(.+)`,                                             // text
   `\\((\\d+(?:[${escapedAnswerSeparators}]\\d+)*)\\)` // answer
 ];
 const clueRegex = new RegExp( '^' + clueRegexComponents.join('\\s+') + '$' );
 const sizeRegex = /^(\d+)x(\d+)$/;
+const idsRegex  = new RegExp( '^' + idsRegexComponent + '$');
 
 const spec = {
   description: [
@@ -34,11 +36,13 @@ const spec = {
     answerSeparators : `How the different words in the answer are combined, where ',' means space-separated, '|' means contiguous, '-' means hyphenated`,
     clueRegex        : 'The pattern used to parse each clue',
     sizeRegex        : 'The pattern used to parse the size attribute (across integer x down integer)',
+    idsRegex         : 'The pattern used to parse the ids of a clue',
   },
   permittedKeys,
   answerSeparators,
   clueRegex : clueRegex.toString(),
   sizeRegex : sizeRegex.toString(),
+  idsRegex  : idsRegex.toString(),
 }
 
 ///
@@ -135,7 +139,7 @@ function parseAcrossAndDownLines( acrossList, downList, errors ){
       if (!matchedClue) {
         errors.push(`could not parse ${direction} clue[${c}], in line='${clueText}'`);
       } else {
-        const [,xText,yText,idsText,bodyText,answerText] = matchedClue;
+        const [,acrossText,downText,idsText,bodyText,answerText] = matchedClue;
         const id = idsText.split(/\D+/)[0];
         if (!clues.hasOwnProperty(id)) {
           clues[id] = {}; // NB, the id is converted to a string when used as an object key.
@@ -143,10 +147,11 @@ function parseAcrossAndDownLines( acrossList, downList, errors ){
         if( clues.hasOwnProperty(direction) ){
           errors.push(`duplicate ${direction} for clue[${c}], in line='${clueText}'`);
         } else {
-          clues[id][direction] = {};
+          clues[id][direction] = {
+            across: parseInt(acrossText, 10),
+            down: parseInt(downText, 10),
+          };
           clues[id][direction].raw = { // place the raw values here for later parsing/checking
-            xText,
-            yText,
             idsText,
             bodyText,
             answerText,
@@ -168,7 +173,7 @@ function parseAcrossAndDownLines( acrossList, downList, errors ){
 }
 
 ///
-//
+// given sizeText='12x12', parse it into dimensions
 ///
 
 function parseSize( sizeText, errors ){

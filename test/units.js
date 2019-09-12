@@ -175,6 +175,7 @@ test( 'crosswordDataFormat.parse fn - basic header keys', assert => {
          context: {response},
       });
     }
+    // check for an invalid size
   }
   {
     // questions: do we allow upper case keys?
