@@ -95,7 +95,7 @@ function scanYamlText( text, errors ){
 // - check the clue ids are contiguous
 ///
 //const clueRegex = /^- \((\d+),(\d+)\) (\d+(?:[,\-]\d+(?:across|down)?))\. (.+) \(([^\)]+)\)$/; // x,y,ids,text,answer
-const clueRegex = /^- \((\d+),(\d+)\) (\d+)\. (.+) \((\d+)\)$/; // x,y,ids,text,answer
+const clueRegex = /^- \((\d+),(\d+)\) (\d+(?:[,\-]\d+(?:\s*(?:across|down)))*)\. (.+) \((\d+(?:[,\|\-]\d+)*)\)$/; // x,y,ids,text,answer
 function parseAcrossAndDownLines( acrossList, downList, errors ){
   const clues = {}; // [id] = { across: {}, down: {}}. Every clue possibly has an across and a down.
 

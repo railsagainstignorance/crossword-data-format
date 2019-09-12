@@ -192,7 +192,7 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
     {
       const response = crosswordDataFormat.parse(headerLines.join("\n"));
       assert.same({
-             msg: `returns no errors and isValid==true for a valid header containing a simple across clue`,
+             msg: `returns no errors and isValid==true for a valid header containing a simple across clue (with answer as a number)`,
           actual: response && response.errors && response.errors.length===0 && response.hasOwnProperty('isValid') && response.isValid,
         expected: true,
          context: {response}
@@ -201,7 +201,7 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
     {
       const response = crosswordDataFormat.parse(headerLines.join("\n"));
       assert.same({
-             msg: `returns largestClueId==1 for a valid header containing a simple across clue`,
+             msg: `returns largestClueId==1 for a valid header containing a simple across clue  (with answer as a number)`,
           actual: response && response.errors && response.errors.length===0 && response.hasOwnProperty('largestClueId') && response.largestClueId==='1',
         expected: true,
          context: {response}
@@ -209,19 +209,64 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
     }
   }
   {
-    {
-      const headerLines = specHeadersMinusAcrossAndDown
-      .concat(['across:'])
-      .concat(['- (1,1) 1. Tries during proper practice session (9)'])
-      .concat(['down:'])
-      .concat(['- (1,3) 2. Tries during proper practice session (9)']);
-      const response = crosswordDataFormat.parse(headerLines.join("\n"));
-      assert.same({
-             msg: `returns largestClueId==2 for a valid header containing one simple across clue and one simple down clues`,
-          actual: response && response.errors && response.errors.length===0 && response.hasOwnProperty('largestClueId') && response.largestClueId==='2',
-        expected: true,
-         context: {response}
-      });
-    }
+    const headerLines = specHeadersMinusAcrossAndDown
+    .concat(['across:'])
+    .concat(['- (1,1) 1. Tries during proper practice session (9)'])
+    .concat(['down:'])
+    .concat(['- (1,3) 2. Tries during proper practice session (9)']);
+    const response = crosswordDataFormat.parse(headerLines.join("\n"));
+    assert.same({
+           msg: `returns largestClueId==2 for a valid header containing one simple across clue and one simple down clues`,
+        actual: response && response.errors && response.errors.length===0 && response.hasOwnProperty('largestClueId') && response.largestClueId==='2',
+      expected: true,
+       context: {response}
+    });
   }
+  {
+    const headerLines = specHeadersMinusAcrossAndDown
+    .concat(['across:'])
+    .concat(['- (1,1) 1. An Across clue (5)'])
+    .concat(['down:'])
+    .concat(['- (1,3) 2. A Down clue (4)'])
+    .concat(['- (1,5) 3. A Down clue (3)']);
+    const response = crosswordDataFormat.parse(headerLines.join("\n"));
+    assert.same({
+           msg: `returns largestClueId==3 for a valid header containing one across clue and two down clues`,
+        actual: response && response.errors && response.errors.length===0 && response.hasOwnProperty('largestClueId') && response.largestClueId==='3',
+      expected: true,
+       context: {response}
+    });
+  }
+  {
+    const headerLines = specHeadersMinusAcrossAndDown
+    .concat(['across:'])
+    .concat(['- (1,1) 1,2 across,3 across. An Across clue (12)'])
+    .concat(['down:'])
+    .concat(['- (1,3) 2. See 1 Down (4)'])
+    .concat(['- (1,5) 3. See 1 Down (3)']);
+    const response = crosswordDataFormat.parse(headerLines.join("\n"));
+    assert.same({
+           msg: `returns largestClueId==3 for a valid header containing one across clue combining with two down clues combined to a 1 word answer`,
+        actual: response && response.errors && response.errors.length===0 && response.hasOwnProperty('largestClueId') && response.largestClueId==='3',
+      expected: true,
+       context: {response}
+    });
+  }
+  {
+    const headerLines = specHeadersMinusAcrossAndDown
+    .concat(['across:'])
+    .concat(['- (1,1) 1,2 across,3 across. An Across clue (5,4,3)'])
+    .concat(['down:'])
+    .concat(['- (1,3) 2. See 1 Down (4)'])
+    .concat(['- (1,5) 3. See 1 Down (3)']);
+    const response = crosswordDataFormat.parse(headerLines.join("\n"));
+    assert.same({
+           msg: `returns largestClueId==3 for a valid header containing one across clue combining with two down clues combined to a multi word answer`,
+        actual: response && response.errors && response.errors.length===0 && response.hasOwnProperty('largestClueId') && response.largestClueId==='3',
+      expected: true,
+       context: {response}
+    });
+  }
+  // check for other separators e.g. -,|, etc
+
 });
