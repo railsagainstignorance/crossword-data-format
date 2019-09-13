@@ -259,7 +259,7 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
     .concat(['across:'])
     .concat(['- (1,1) 1. Tries during proper practice session (9)'])
     .concat(['down:'])
-    .concat(['- (1,3) 2. Tries during proper practice session (9)']);
+    .concat(['- (3,1) 2. Tries during proper practice session (9)']);
     const response = crosswordDataFormat.parse(headerLines.join("\n"));
     assert.same({
            msg: `returns largestClueId==2 for a valid header containing one simple across clue and one simple down clues`,
@@ -273,8 +273,8 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
     .concat(['across:'])
     .concat(['- (1,1) 1. An Across clue (5)'])
     .concat(['down:'])
-    .concat(['- (1,3) 2. A Down clue (4)'])
-    .concat(['- (1,5) 3. A Down clue (3)']);
+    .concat(['- (3,1) 2. A Down clue (4)'])
+    .concat(['- (5,1) 3. A Down clue (3)']);
     const response = crosswordDataFormat.parse(headerLines.join("\n"));
     assert.same({
            msg: `returns largestClueId==3 for a valid header containing one across clue and two down clues`,
@@ -288,8 +288,8 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
     .concat(['across:'])
     .concat(['- (1,1) 1,2 across,3 across. An Across clue (12)'])
     .concat(['down:'])
-    .concat(['- (1,3) 2. See 1 Down (4)'])
-    .concat(['- (1,5) 3. See 1 Down (3)']);
+    .concat(['- (3,1) 2. See 1 Down (4)'])
+    .concat(['- (5,1) 3. See 1 Down (3)']);
     const response = crosswordDataFormat.parse(headerLines.join("\n"));
     assert.same({
            msg: `returns largestClueId==3 for a valid header containing one across clue combining with two down clues combined to a 1 word answer`,
@@ -304,8 +304,8 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
       .concat(['across:'])
       .concat([`- (1,1) 1,2 across,3 across. An Across clue (5${s}4${s}3)`])
       .concat(['down:'])
-      .concat(['- (1,3) 2. See 1 Down (4)'])
-      .concat(['- (1,5) 3. See 1 Down (3)']);
+      .concat(['- (3,1) 2. See 1 Down (4)'])
+      .concat(['- (5,1) 3. See 1 Down (3)']);
       const response = crosswordDataFormat.parse(headerLines.join("\n"));
       assert.same({
              msg: `returns largestClueId==3 for a valid header containing one across clue combining with two down clues combined to a multi word answer with separator '${s}'`,
