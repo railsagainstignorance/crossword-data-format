@@ -26,6 +26,7 @@ const clueRegexComponents = [ // all backslashes escaped; to be separated by spa
 const clueRegex = new RegExp( '^' + clueRegexComponents.join('\\s+') + '$' );
 const sizeRegex = /^(\d+)x(\d+)$/;
 const idsRegex  = new RegExp( '^' + idsRegexComponent + '$');
+const bodyBelongsToRegex = new RegExp( /^See (\d+)\s([aA]cross|[dD]own)$/ );
 
 const spec = {
   description: [
@@ -43,6 +44,7 @@ const spec = {
   clueRegex : clueRegex.toString(),
   sizeRegex : sizeRegex.toString(),
   idsRegex  : idsRegex.toString(),
+  bodyBelongsToRegex: bodyBelongsToRegex.toString(),
 }
 
 ///
@@ -147,11 +149,16 @@ function parseAcrossAndDownLines( acrossList, downList, errors ){
         if( clues.hasOwnProperty(direction) ){
           errors.push(`duplicate ${direction} for clue[${c}], in line='${clueText}'`);
         } else {
-          clues[id][direction] = {
+          const clue = { // ensure each clue knows its own id and direction
+            id,
+            direction
+          };
+          clues[id][direction] = clue;
+          clue.coords = {
             across: parseInt(acrossText, 10),
             down: parseInt(downText, 10),
           };
-          clues[id][direction].raw = { // place the raw values here for later parsing/checking
+          clue.raw = { // place the raw values here for later parsing/checking
             idsText,
             bodyText,
             answerText,
@@ -192,6 +199,55 @@ function parseSize( sizeText, errors ){
 }
 
 ///
+// loop over clues, parsing ids, checking they are valid
+///
+
+function parseCluesIds( clues, errors ){
+
+  // check all clues for belongsTo
+  Object.keys(clues).forEach( id => {
+    Object.keys(clues[id]).forEach( direction => {
+      const clue = clues[id][direction];
+
+      const matchBelongsTo = clue.raw.bodyText.match( bodyBelongsToRegex );
+      if (!matchBelongsTo) {
+        clue.belongsTo = null;
+      } else {
+        clue.belongsTo = {};
+        clue.belongsTo.id = matchBelongsTo[1];
+        clue.belongsTo.direction = matchBelongsTo[2].toLowerCase();
+
+        // check it belongs to a valid clue
+        if (!clues.hasOwnProperty(clue.belongsTo.id)) {
+          errors.push( `clue [${clue.id}][${clue.direction}] belongs to an unknown id [${clue.belongsTo.id}]`);
+        } else if( !clues[clue.belongsTo.id].hasOwnProperty(clue.belongsTo.direction) ){
+          errors.push( `clue [${clue.id}][${clue.direction}] belongs to an id [${clue.belongsTo.id}] without direction=${clue.belongsTo.direction}`);
+        }
+      }
+    });
+  });
+
+  // check all clues for owns, and that each owned clue belongsTo
+
+  return {
+  }
+}
+
+///
+// loop over clues, processing the answers
+///
+
+function parseCluesAnswers( clues, errors ){
+
+  clues.forEach( clue => {
+
+  })
+
+  return {
+  }
+}
+
+///
 // embellishes the parsing obj as the parsing procedes,
 // returns when there is a fatal error with the parsing
 ///
@@ -213,6 +269,10 @@ function innerParse( parsing ){
   const parsedSize = parseSize( parsing.size, parsing.errors );
   Object.assign( parsing, parsedSize );
   if (parsing.errors.length !== 0) { return parsing; }
+
+  parseCluesIds( parsing.clues, parsing.errors );
+  // parseCluesAnswers - to get length for each clue's answers, and separators overal, and for each clue
+  // checkAnswersFitInDimensions
 
   return parsing;
 }

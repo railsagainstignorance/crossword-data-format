@@ -288,12 +288,13 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
     .concat(['across:'])
     .concat(['- (1,1) 1,2 across,3 across. An Across clue (12)'])
     .concat(['down:'])
-    .concat(['- (3,1) 2. See 1 Down (4)'])
-    .concat(['- (5,1) 3. See 1 Down (3)']);
+    .concat(['- (3,1) 2. See 1 Across (4)'])
+    .concat(['- (5,1) 3. See 1 Across (3)']);
     const response = crosswordDataFormat.parse(headerLines.join("\n"));
     assert.same({
            msg: `returns largestClueId==3 for a valid header containing one across clue combining with two down clues combined to a 1 word answer`,
-        actual: response && response.errors && response.errors.length===0 && response.hasOwnProperty('largestClueId') && response.largestClueId==='3',
+        actual: response && response.errors && response.errors.length===0
+             && response.hasOwnProperty('largestClueId') && response.largestClueId==='3',
       expected: true,
        context: {response}
     });
@@ -304,18 +305,55 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
       .concat(['across:'])
       .concat([`- (1,1) 1,2 across,3 across. An Across clue (5${s}4${s}3)`])
       .concat(['down:'])
-      .concat(['- (3,1) 2. See 1 Down (4)'])
-      .concat(['- (5,1) 3. See 1 Down (3)']);
+      .concat(['- (3,1) 2. See 1 Across (4)'])
+      .concat(['- (5,1) 3. See 1 Across (3)']);
       const response = crosswordDataFormat.parse(headerLines.join("\n"));
       assert.same({
              msg: `returns largestClueId==3 for a valid header containing one across clue combining with two down clues combined to a multi word answer with separator '${s}'`,
-          actual: response && response.errors && response.errors.length===0 && response.hasOwnProperty('largestClueId') && response.largestClueId==='3',
+          actual: response && response.errors && response.errors.length===0
+               && response.hasOwnProperty('largestClueId') && response.largestClueId==='3',
         expected: true,
          context: {response}
       });
-
     })
   }
-  // check for other separators e.g. -,|, etc
+  {
+    const headerLines = specHeadersMinusAcrossAndDown
+    .concat(['across:'])
+    .concat([`- (1,1) 1,2 across,3 across. An Across clue (5,4,3)`])
+    .concat(['down:'])
+    .concat(['- (3,1) 2. See 1 Across (4)'])
+    .concat(['- (5,1) 3. See 1 Across (3)']);
+    const response = crosswordDataFormat.parse(headerLines.join("\n"));
+    assert.same({
+           msg: `returns clue[2][down].belongsTo.id=='1' and clue[2][down].belongsTo.direction=='across'`,
+        actual: response && response.errors && response.errors.length===0
+             && response.clues && response.clues['2'] && response.clues['2'].down && response.clues['2'].down.belongsTo
+             && response.clues['2'].down.belongsTo.id==='1'
+             && response.clues['2'].down.belongsTo.direction==='across',
+      expected: true,
+       context: {response}
+    });
+  }
+
+  // {
+  //   ",-|".split('').forEach( s => {
+  //     const headerLines = specHeadersMinusAcrossAndDown
+  //     .concat(['across:'])
+  //     .concat([`- (1,1) 1,2 across,3 across. An Across clue (5${s}4${s}3)`])
+  //     .concat(['down:'])
+  //     .concat(['- (3,1) 2. See 1 Across (4)'])
+  //     .concat(['- (5,1) 3. See 1 Across (3)']);
+  //     const response = crosswordDataFormat.parse(headerLines.join("\n"));
+  //     assert.same({
+  //            msg: `returns clue[1][across].length==5, with separator='${s}'`,
+  //         actual: response && response.errors && response.errors.length===0
+  //              && response.hasOwnProperty('clue') && response.clue.hasOwnProperty('1') && response.clue[1].hasOwnProperty('across')
+  //              && response.clue[1].length===5,
+  //       expected: true,
+  //        context: {response}
+  //     });
+  //   })
+  // }
 
 });
