@@ -175,7 +175,32 @@ test( 'crosswordDataFormat.parse fn - basic header keys', assert => {
          context: {response},
       });
     }
-    // check for an invalid size
+    { // check for a invalid size
+      ['15x', '17xy12'].forEach( sizeText => {
+        const specHeadersBadSize = [
+          'version: standard v2',
+          'name: Crossword 15813',
+          'author: Falcon',
+          'editor: Colin Inman',
+          'copyright: 2018, Financial Times',
+          'publisher: Financial Times',
+          'pubdate: 2018/03/22',
+          'size: '+sizeText,
+          'across: ',
+          'down: ',
+        ];
+
+        const response = crosswordDataFormat.parse(specHeadersBadSize.join("\n"));
+        assert.same({
+               msg: `returns 1 error and isValid==false for a header with bad size='${sizeText}'`,
+            actual: response && response.errors && response.errors.length===1
+                 && response.hasOwnProperty('isValid') && ! response.isValid,
+          expected: true,
+           context: {response},
+        });
+
+      })
+    }
   }
   {
     // questions: do we allow upper case keys?
