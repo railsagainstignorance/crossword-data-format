@@ -212,6 +212,8 @@ function parseCluesIds( clues, errors ){
       const matchBelongsTo = clue.raw.bodyText.match( bodyBelongsToRegex );
       if (!matchBelongsTo) {
         clue.belongsTo = null;
+      } else if(! clue.raw.idsText.match(/^\d+$/)) {
+        errors.push( `clue [${clue.id}][${clue.direction}] belongs to a clue, but does not have a simple idsText, ${clue.raw.idsText}`);
       } else {
         clue.belongsTo = {};
         clue.belongsTo.id = matchBelongsTo[1];
@@ -228,6 +230,35 @@ function parseCluesIds( clues, errors ){
   });
 
   // check all clues for owns, and that each owned clue belongsTo
+  Object.keys(clues).forEach( id => {
+    Object.keys(clues[id]).forEach( direction => {
+      const clue = clues[id][direction];
+      const idsItems = clue.raw.idsText.split(',');
+      const ownedIdsItems = idsItems.slice(1);
+      clue.owns = [];
+      ownedIdsItems.forEach( idItem => {
+        const [ownedId, ownedDirection] = idItem.split(' ');
+        // check ownedId is valid,
+        // if ownedDirection is specified, check is valid
+        // otherwise infer it
+        if (!clues.hasOwnProperty(ownedId)) {
+          errors.push( `clue [${clue.id}][${clue.direction}] owns an unknown id [${ownedId}], in clueText='${clue.raw.clueText}'`);
+        } else {
+          if (ownedDirection !== undefined && !clues[ownedId].hasOwnProperty(ownedDirection)) {
+            errors.push( `clue [${clue.id}][${clue.direction}] owns an id [${ownedId}] with an unknown direction [${ownedDirection}], in clueText='${clue.raw.clueText}'`);
+          } else if (ownedDirection === undefined && Object.keys(clues[ownedId]).length === 2) {
+            errors.push( `clue [${clue.id}][${clue.direction}] owns an id [${ownedId}] with an ambiguous direction, in clueText='${clue.raw.clueText}'`);
+          } else {
+            const inferredDirection = (ownedDirection !== undefined)? ownedDirection : Object.keys(clues[ownedId])[0];
+            clue.owns.push({
+              id : ownedId,
+              direction : inferredDirection
+            });
+          }
+        }
+      });
+    });
+  });
 
   return {
   }

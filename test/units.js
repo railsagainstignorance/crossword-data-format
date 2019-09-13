@@ -286,7 +286,7 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
   {
     const headerLines = specHeadersMinusAcrossAndDown
     .concat(['across:'])
-    .concat(['- (1,1) 1,2 across,3 across. An Across clue (12)'])
+    .concat(['- (1,1) 1,2 down,3 down. An Across clue (12)'])
     .concat(['down:'])
     .concat(['- (3,1) 2. See 1 Across (4)'])
     .concat(['- (5,1) 3. See 1 Across (3)']);
@@ -303,7 +303,7 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
     ",-|".split('').forEach( s => {
       const headerLines = specHeadersMinusAcrossAndDown
       .concat(['across:'])
-      .concat([`- (1,1) 1,2 across,3 across. An Across clue (5${s}4${s}3)`])
+      .concat([`- (1,1) 1,2 down,3 down. An Across clue (5${s}4${s}3)`])
       .concat(['down:'])
       .concat(['- (3,1) 2. See 1 Across (4)'])
       .concat(['- (5,1) 3. See 1 Across (3)']);
@@ -320,17 +320,25 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
   {
     const headerLines = specHeadersMinusAcrossAndDown
     .concat(['across:'])
-    .concat([`- (1,1) 1,2 across,3 across. An Across clue (5,4,3)`])
+    .concat([`- (1,1) 1,2 down,3 down. An Across clue (5,4,3)`])
     .concat(['down:'])
     .concat(['- (3,1) 2. See 1 Across (4)'])
     .concat(['- (5,1) 3. See 1 Across (3)']);
     const response = crosswordDataFormat.parse(headerLines.join("\n"));
     assert.same({
-           msg: `returns clue[2][down].belongsTo.id=='1' and clue[2][down].belongsTo.direction=='across'`,
+           msg: `returns clue[2].down.belongsTo.id=='1' and clue[2].down.belongsTo.direction=='across'`,
         actual: response && response.errors && response.errors.length===0
              && response.clues && response.clues['2'] && response.clues['2'].down && response.clues['2'].down.belongsTo
              && response.clues['2'].down.belongsTo.id==='1'
              && response.clues['2'].down.belongsTo.direction==='across',
+      expected: true,
+       context: {response}
+    });
+    assert.same({
+           msg: `returns clue[1].across.owns.length===2`,
+        actual: response && response.errors && response.errors.length===0
+             && response.clues && response.clues['1'].across && response.clues['1'].across.owns
+             && response.clues['1'].across.owns.length === 2,
       expected: true,
        context: {response}
     });
@@ -340,7 +348,7 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
   //   ",-|".split('').forEach( s => {
   //     const headerLines = specHeadersMinusAcrossAndDown
   //     .concat(['across:'])
-  //     .concat([`- (1,1) 1,2 across,3 across. An Across clue (5${s}4${s}3)`])
+  //     .concat([`- (1,1) 1,2 down,3 down. An Across clue (5${s}4${s}3)`])
   //     .concat(['down:'])
   //     .concat(['- (3,1) 2. See 1 Across (4)'])
   //     .concat(['- (5,1) 3. See 1 Across (3)']);
