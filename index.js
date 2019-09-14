@@ -412,6 +412,36 @@ function parseCluesAnswers( clues, errors ){
 }
 
 ///
+// loop over all the clues and ensure the answers fit within the grid
+///
+
+function checkAnswersFitInDimensions( clues, dimensions, errors ){
+
+  Object.keys(clues).forEach( id => {
+    Object.keys(clues[id]).forEach( direction => {
+      const clue = clues[id][direction];
+      let acrossest = clue.coords.across + ((direction === 'across')? clue.answer.length : 0);
+      let downest   = clue.coords.down   + ((direction === 'down'  )? clue.answer.length : 0);
+      if (clue.coords.across > dimensions.across) {
+        errors.push(`clue [${clue.id}][${clue.direction}] starts outside of the grid: clue.coords.across (${clue.coords.across}) > dimensions.across (${dimensions.across})`);
+      }
+      if (clue.coords.down > dimensions.down) {
+        errors.push(`clue [${clue.id}][${clue.direction}] starts outside of the grid: clue.coords.down (${clue.coords.down}) > dimensions.across (${dimensions.down})`);
+      }
+      if (acrossest > dimensions.across) {
+        errors.push(`clue [${clue.id}][${clue.direction}] ends outside of the grid: acrossest (${acrossest}) > dimensions.across (${dimensions.across})`);
+      }
+      if (downest > dimensions.down) {
+        errors.push(`clue [${clue.id}][${clue.direction}] starts outside of the grid: downest (${downest}) > dimensions.across (${dimensions.down})`);
+      }
+    });
+  });
+
+  return {
+  }
+}
+
+///
 // embellishes the parsing obj as the parsing procedes,
 // returns when there is a fatal error with the parsing
 ///
@@ -440,7 +470,7 @@ function innerParse( parsing ){
   parseCluesAnswers( parsing.clues, parsing.errors ); // - to get length for each clue's answers, and separators overal, and for each clue
   if (parsing.errors.length !== 0) { return parsing; }
 
-  // checkAnswersFitInDimensions
+  checkAnswersFitInDimensions( parsing.clues, parsing.dimensions, parsing.errors );
 
   return parsing;
 }

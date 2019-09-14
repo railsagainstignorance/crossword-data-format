@@ -434,4 +434,37 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
        context: {response}
     });
   }
+  {
+    const headerLines = specHeadersMinusAcrossAndDown
+    .concat(['across:'])
+    .concat([`- (5,5) 1. An Across clue too far? (11)`])
+    .concat(['down:'])
+    ;
+    const response = crosswordDataFormat.parse(headerLines.join("\n"));
+    assert.same({
+           msg: `not allowed an answer overflowing the bounds of the grid`,
+        actual: response.isValid===false && response.errors && response.errors.length > 0
+             && response.errors[0].includes('outside'),
+      expected: true,
+       context: {response}
+    });
+  }
+  {
+    const headerLines = specHeadersMinusAcrossAndDown
+    .concat(['across:'])
+    .concat([`- (1,1) 1,2 down,3 down. An Across clue (16,4,3)`])
+    .concat(['down:'])
+    .concat(['- (3,1) 2. See 1 Across (4)'])
+    .concat(['- (5,1) 3. See 1 Across (3)'])
+    .concat(['- (7,1) 4. A clue (2-2,3)'])
+    ;
+    const response = crosswordDataFormat.parse(headerLines.join("\n"));
+    assert.same({
+           msg: `not allowed a complex answer overflowing the bounds of the grid`,
+        actual: response.isValid===false && response.errors && response.errors.length > 0
+             && response.errors[0].includes('outside'),
+      expected: true,
+       context: {response}
+    });
+  }
 });
