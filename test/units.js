@@ -499,4 +499,53 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
        context: {response}
     });
   }
+  {
+    const headerLines = specHeadersMinusAcrossAndDown
+    .concat(['across:'])
+    .concat([`- (3,1) 1. An Across clue (5,4,3)`])
+    .concat([`- (5,2) 3. An Across clue (5)`])
+    .concat(['down:'])
+    ;
+    const response = crosswordDataFormat.parse(headerLines.join("\n"));
+    assert.same({
+           msg: `must not have any missing clue ids`,
+        actual: response.isValid===false && response.errors && response.errors.length > 0
+             && response.errors[0].includes('missing'),
+      expected: true,
+       context: {response}
+    });
+  }
+  {
+    const headerLines = specHeadersMinusAcrossAndDown
+    .concat(['across:'])
+    .concat(['down:'])
+    .concat([`- (3,1) 1. An Across clue (5,4,3)`])
+    .concat([`- (5,2) 3. An Across clue (5)`])
+    ;
+    const response = crosswordDataFormat.parse(headerLines.join("\n"));
+    assert.same({
+           msg: `must not have any missing clue ids`,
+        actual: response.isValid===false && response.errors && response.errors.length > 0
+             && response.errors[0].includes('missing'),
+      expected: true,
+       context: {response}
+    });
+  }
+  {
+    const headerLines = specHeadersMinusAcrossAndDown
+    .concat(['across:'])
+    .concat([`- (1,1) 1. An Across clue (5,4,3)`])
+    .concat(['down:'])
+    .concat([`- (3,3) 1. A Down clue (5)`])
+    ;
+    const response = crosswordDataFormat.parse(headerLines.join("\n"));
+    assert.same({
+           msg: `clues with the same ids must have the same coords`,
+        actual: response.isValid===false && response.errors && response.errors.length > 0
+             && response.errors[0].includes('different coords'),
+      expected: true,
+       context: {response}
+    });
+  }
+
 });

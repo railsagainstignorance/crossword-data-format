@@ -449,6 +449,40 @@ function checkAnswersFitInDimensions( clues, dimensions, errors ){
 }
 
 ///
+// check
+// - all the clue ids are contiguous (no gaps)
+// - any across+down clues have the same crords
+// - the clue coords match the id sequence (across then down)
+///
+function checkClueContiguity( clues, errors ){
+  const cluesIds = Object.keys( clues );
+  const cluesIdsInts = cluesIds.map( c => parseInt(c,10) );
+  const orderedCluesIdsInts = cluesIdsInts.sort( (a,b) => a-b );
+
+  // check for missing clue ids
+  orderedCluesIdsInts.forEach( (idInt, i) => {
+    if (idInt !== i+1) {
+      errors.push(`missing clue[${idInt}]`);
+    }
+  });
+
+  // check any across+down clues have the same coords
+  cluesIds.forEach( id => {
+    const directions = Object.keys(clues[id]).sort(); // across then down
+    if (clues[id].hasOwnProperty('across') && clues[id].hasOwnProperty('down')) {
+      const coords1 = clues[id].across.coords;
+      const coords2 = clues[id].down.coords;
+      if (coords1.across !== coords2.across || coords1.down !== coords2.down) {
+        errors.push(`clue[${id}] has different coords for it's across and down variants`);
+      }
+    }
+  });
+
+  return {
+  }
+}
+
+///
 // embellishes the parsing obj as the parsing procedes,
 // returns when there is a fatal error with the parsing
 ///
@@ -478,6 +512,9 @@ function innerParse( parsing ){
   if (parsing.errors.length !== 0) { return parsing; }
 
   checkAnswersFitInDimensions( parsing.clues, parsing.dimensions, parsing.errors );
+  if (parsing.errors.length !== 0) { return parsing; }
+
+  checkClueContiguity( parsing.clues, parsing.errors );
   if (parsing.errors.length !== 0) { return parsing; }
 
   // calcCellConnectivity
