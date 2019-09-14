@@ -478,6 +478,21 @@ function checkClueContiguity( clues, errors ){
     }
   });
 
+  // check the clues coords are in sequence: across then down
+  let prevCoords = {across: 0, down: 0}
+  cluesIds.forEach( id => {
+    const directions = Object.keys(clues[id]);
+    const coords = clues[id][directions[0]].coords;
+    if ( (coords.down > prevCoords.down)
+    || ( (coords.down === prevCoords.down) && (coords.across > prevCoords.across))
+    ) {
+      // this is fine
+    } else {
+      errors.push(`clue[${id}]'s coords are out of sequence with previous clue: must be across then down'`);
+    }
+    prevCoords = coords;
+  });
+
   return {
   }
 }
