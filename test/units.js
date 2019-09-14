@@ -60,6 +60,7 @@ const test = (component, fn, verbose=false) => {
   actual:
     ${ actual }
   ${ contextText }
+not ok ${ count } - ${ msg }
 `
         );
       }
@@ -286,7 +287,7 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
   {
     const headerLines = specHeadersMinusAcrossAndDown
     .concat(['across:'])
-    .concat(['- (1,1) 1,2 down,3 down. An Across clue (12)'])
+    .concat(['- (1,1) 1,2 down,3 down. An Across clue (5,4,3)'])
     .concat(['down:'])
     .concat(['- (3,1) 2. See 1 Across (4)'])
     .concat(['- (5,1) 3. See 1 Across (3)']);
@@ -404,9 +405,15 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
        context: {response}
     });
     assert.same({
-           msg: `clue[1][across].answer.length===12`,
-        actual: response.clues['1'].across.answer.length === 12,
-      expected: true,
+           msg: `clue[1][across].answer.length===5`,
+        actual: response.clues['1'].across.answer.length,
+      expected: 5,
+       context: {response}
+    });
+    assert.same({
+           msg: `clue[1][across].answer.lengthOwned===12`,
+        actual: response.clues['1'].across.answer.lengthOwned,
+      expected: 12,
        context: {response}
     });
   }

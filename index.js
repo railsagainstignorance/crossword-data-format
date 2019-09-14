@@ -15,8 +15,8 @@ const permittedKeys = { // mapped to their type
 
 const answerSeparators = ',-|'.split();
 const escapedAnswerSeparators = ',\-\|'.split();
-const wordOrNumberRegexComponent = `(?:\\d+|[A-Z]+)`;
-const answerRegexComponent = `\\((${wordOrNumberRegexComponent}(?:[${escapedAnswerSeparators}]${wordOrNumberRegexComponent})*)\\)`;
+const sourceRegexComponent = `(?:\\d+|[A-Z]+)`;
+const answerRegexComponent = `\\((${sourceRegexComponent}(?:[${escapedAnswerSeparators}]${sourceRegexComponent})*)\\)`;
 const idsRegexComponent = `(\\d+(?:,\\d+(?:\\s*(?:across|down)))*)\\.`;
 const clueRegexComponents = [ // all backslashes escaped; to be separated by spaces
   `-`,                     // standard YAML list element indicator
@@ -297,33 +297,39 @@ function parseCluesAnswers( clues, errors ){
       };
       clue.answer = answer;
       // pick off first part, then all remaining parts with separators
-      const matchedFirstPart = clue.raw.answerText.match(`^(${wordOrNumberRegexComponent})(.*)$`);
+      const matchedFirstPart = clue.raw.answerText.match(`^(${sourceRegexComponent})(.*)$`);
       if (!matchedFirstPart) {
         errors.push(`failed to parse first part of answer in clue [${clue.id}][${clue.direction}], answerText='${clue.raw.answerText}'`);
       } else {
+        let sequence = 0;
         const [,firstPart, remainingPart] = matchedFirstPart;
-        answer.parts.push({ source : firstPart })
-        const remainingPartsRegex = new RegExp(`([${escapedAnswerSeparators.join()}])(${wordOrNumberRegexComponent})`, 'g');
+        answer.parts.push({
+          wordOrNumber : firstPart,
+          sequence : sequence++
+        })
+        const remainingPartsRegex = new RegExp(`([${escapedAnswerSeparators.join()}])(${sourceRegexComponent})`, 'g');
         let matchReminingPart;
         while (matchReminingPart = remainingPartsRegex.exec(remainingPart)) {
           const [ , separator, wordOrNumber ] = matchReminingPart;
           answer.parts.push({
-            source : wordOrNumber,
-            separator
+            wordOrNumber,
+            separator,
+            sequence: sequence++,
           });
         }
 
         // complete parsing of the parts
         answer.parts.forEach( part => {
-          if (part.source.match(/\d+/)) {
-            part.length = parseInt(part.source, 10);
-            part.text = placeHolderChar.repeat(part.length);
+          if (part.wordOrNumber.match(/\d+/)) {
+            const numChars = parseInt(part.wordOrNumber, 10);
+            part.text = placeHolderChar.repeat(numChars);
             part.placeholder = true;
           } else {
-            part.length = part.source.length;
-            part.text = part.source;
+            part.text = part.wordOrNumber;
             part.placeholder = false;
           }
+
+          part.length = part.text.length;
         });
 
         answer.length = answer.parts.reduce( (sum, part) => sum + part.length, 0); // add up the part lengths
@@ -352,6 +358,54 @@ function parseCluesAnswers( clues, errors ){
   // - register membership of parts to owned clues
   // - calc the owned clue's answer
   // - calc the owned clue's combined answer
+
+  Object.keys(clues).forEach( id => {
+    Object.keys(clues[id]).forEach( direction => {
+      const clue = clues[id][direction];
+      if (clue.owns.length > 0) {
+        clue.answer.lengthOwned = clue.answer.length;
+        let remainingLength = clue.answer.length;
+        const remainingParts = clue.answer.parts.slice();
+        const reversedOwns = clue.owns.slice().reverse();
+
+        // loop over each owned clue, started with the last one
+        // - use up the remaining parts of the owning clue (starting with the last one) to fill each clue
+        // - keep going til no owned clues left, with the remaining length belonging to the owning clue
+        reversedOwns.forEach( owned => {
+          if (remainingLength === -1) { return; } // short-circuit the loop if we've found a problem
+          const ownedClue = clues[owned.id][owned.direction];
+          ownedClue.belongsTo.partsSequence = [];
+          let remainingOwnedClueLength = ownedClue.answer.length;
+          while (remainingOwnedClueLength>0) {
+            const latestPart = remainingParts.pop();
+            latestPart.clue = {
+              id       : ownedClue.id,
+              direction: ownedClue.direction
+            };
+            ownedClue.belongsTo.partsSequence.unshift( latestPart.sequence );
+            remainingOwnedClueLength -= latestPart.length;
+            remainingLength          -= latestPart.length;
+          }
+
+          if (remainingOwnedClueLength !== 0) {
+            errors.push(`clue [${clue.id}][${clue.direction}]'s answer.parts cannot encompass the answer of ownedClue [${ownedClue.id}][${ownedClue.direction}]`);
+            remainingLength = -1; // short-circuit the outer loop
+          }
+        });
+
+        if (remainingLength === -1) {
+          errors.push(`clue [${clue.id}][${clue.direction}]'s answer.parts failed to encompass the answers of ownedClues`);
+        } else if (remainingLength === 0) {
+          errors.push(`clue [${clue.id}][${clue.direction}]'s answer.parts have no length left after encompassing the answers of ownedClues`);
+        } else if (remainingParts.length === 0) {
+          errors.push(`clue [${clue.id}][${clue.direction}]'s has no answer.parts left after encompassing the answers of ownedClues`);
+        } else {
+          clue.answer.length = remainingLength; // must be the portion of the combined length held by this clue
+        }
+      }
+    });
+  });
+
 
   return {
   }
@@ -383,9 +437,8 @@ function innerParse( parsing ){
   parseCluesIds( parsing.clues, parsing.errors );
   if (parsing.errors.length !== 0) { return parsing; }
 
-  parseCluesAnswers( parsing.clues, parsing.errors );
+  parseCluesAnswers( parsing.clues, parsing.errors ); // - to get length for each clue's answers, and separators overal, and for each clue
   if (parsing.errors.length !== 0) { return parsing; }
-  // parseCluesAnswers - to get length for each clue's answers, and separators overal, and for each clue
 
   // checkAnswersFitInDimensions
 
