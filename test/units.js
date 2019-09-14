@@ -343,25 +343,36 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
        context: {response}
     });
   }
+  {
+    const headerLines = specHeadersMinusAcrossAndDown
+    .concat(['across:'])
+    .concat([`- (1,1) 1,2 down,3 down. An Across clue (5,4,3)`])
+    .concat(['down:'])
+    .concat(['- (3,1) 2. I do not belong (4)'])
+    .concat(['- (5,1) 3. See 1 Across (3)']);
+    const response = crosswordDataFormat.parse(headerLines.join("\n"));
+    assert.same({
+           msg: `returns isValid===false when a clue should belong but doesn't`,
+        actual: response.isValid,
+      expected: false,
+       context: {response}
+    });
+  }
+  {
+    const headerLines = specHeadersMinusAcrossAndDown
+    .concat(['across:'])
+    .concat([`- (1,1) 1,2 down,3 down. An Across clue (5,4,3)`])
+    .concat(['down:'])
+    .concat(['- (3,1) 2. See 3 Down (4)'])
+    .concat(['- (5,1) 3. See 1 Across (3)']);
+    const response = crosswordDataFormat.parse(headerLines.join("\n"));
+    assert.same({
+           msg: `returns isValid===false when a clue is owned but belongsTo a different clue`,
+        actual: response.isValid,
+      expected: false,
+       context: {response}
+    });
+  }
 
-  // {
-  //   ",-|".split('').forEach( s => {
-  //     const headerLines = specHeadersMinusAcrossAndDown
-  //     .concat(['across:'])
-  //     .concat([`- (1,1) 1,2 down,3 down. An Across clue (5${s}4${s}3)`])
-  //     .concat(['down:'])
-  //     .concat(['- (3,1) 2. See 1 Across (4)'])
-  //     .concat(['- (5,1) 3. See 1 Across (3)']);
-  //     const response = crosswordDataFormat.parse(headerLines.join("\n"));
-  //     assert.same({
-  //            msg: `returns clue[1][across].length==5, with separator='${s}'`,
-  //         actual: response && response.errors && response.errors.length===0
-  //              && response.hasOwnProperty('clue') && response.clue.hasOwnProperty('1') && response.clue[1].hasOwnProperty('across')
-  //              && response.clue[1].length===5,
-  //       expected: true,
-  //        context: {response}
-  //     });
-  //   })
-  // }
 
 });

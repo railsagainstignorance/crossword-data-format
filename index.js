@@ -254,6 +254,13 @@ function parseCluesIds( clues, errors ){
               id : ownedId,
               direction : inferredDirection
             });
+
+            const ownedClue = clues[ownedId][inferredDirection];
+            if (!ownedClue.belongsTo) {
+              errors.push(`clue [${clue.id}][${clue.direction}] owns a clue [${ownedId}][${inferredDirection}] which does not belongsTo anything`);
+            } else if( ownedClue.belongsTo.id !== clue.id || ownedClue.belongsTo.direction !== clue.direction ){
+              errors.push(`clue [${clue.id}][${clue.direction}] owns a clue [${ownedId}][${inferredDirection}] which belongsTo a different clue [${ownedClue.belongsTo.id}][${ownedClue.belongsTo.direction}]`);
+            }
           }
         }
       });
