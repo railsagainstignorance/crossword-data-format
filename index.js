@@ -331,9 +331,25 @@ function parseCluesAnswers( clues, errors ){
     });
   });
 
+  // loop over all clues which belongsTo something, to check they just have one answer part
+
+  Object.keys(clues).forEach( id => {
+    Object.keys(clues[id]).forEach( direction => {
+      const clue = clues[id][direction];
+      if (clue.belongsTo) {
+        if (clue.answer.parts.length > 1) {
+          errors.push(`clue [${clue.id}][${clue.direction}] belongsTo another clue, but has a multi-part answer, answerText='${clue.raw.answerText}'`);
+        }
+      }
+    });
+  });
+
+  // - register membership of part to clue
+
   // loop over clues which do own
   // - check sizes of owned clues
   // - calc the delta parts that must belong to the owning clue
+  // - register membership of parts to owned clues
   // - calc the owned clue's answer
   // - calc the owned clue's combined answer
 

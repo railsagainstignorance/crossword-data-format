@@ -410,5 +410,21 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
        context: {response}
     });
   }
-
+  {
+    const headerLines = specHeadersMinusAcrossAndDown
+    .concat(['across:'])
+    .concat([`- (1,1) 1,2 down,3 down. An Across clue (5,4,3)`])
+    .concat(['down:'])
+    .concat(['- (3,1) 2. See 1 Across (4)'])
+    .concat(['- (5,1) 3. See 1 Across (2,1)'])
+    .concat(['- (7,1) 4. A clue (2-2,3)'])
+    ;
+    const response = crosswordDataFormat.parse(headerLines.join("\n"));
+    assert.same({
+           msg: `not allowed a belongsTo clue with multi-part answer`,
+        actual: response.isValid,
+      expected: false,
+       context: {response}
+    });
+  }
 });
