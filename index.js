@@ -15,18 +15,22 @@ const permittedKeys = { // mapped to their type
 
 const answerSeparators = ',-|'.split();
 const escapedAnswerSeparators = ',\-\|'.split();
+const wordOrNumberRegexComponent = `(?:\\d+|[A-Z]+)`;
+const answerRegexComponent = `\\((${wordOrNumberRegexComponent}(?:[${escapedAnswerSeparators}]${wordOrNumberRegexComponent})*)\\)`;
 const idsRegexComponent = `(\\d+(?:,\\d+(?:\\s*(?:across|down)))*)\\.`;
 const clueRegexComponents = [ // all backslashes escaped; to be separated by spaces
-  `-`,                                                // standard YAML list element indicator
-  `\\((\\d+),(\\d+)\\)`,                              // across, down
-  idsRegexComponent,                                  // ids
-  `(.+)`,                                             // text
-  `\\((\\d+(?:[${escapedAnswerSeparators}]\\d+)*)\\)` // answer
+  `-`,                     // standard YAML list element indicator
+  `\\((\\d+),(\\d+)\\)`,   // across, down
+  idsRegexComponent,       // ids
+  `(.+)`,                  // text
+  answerRegexComponent     // answer
 ];
 const clueRegex = new RegExp( '^' + clueRegexComponents.join('\\s+') + '$' );
 const sizeRegex = /^(\d+)x(\d+)$/;
 const idsRegex  = new RegExp( '^' + idsRegexComponent + '$');
 const bodyBelongsToRegex = new RegExp( /^See (\d+)\s([aA]cross|[dD]own)$/ );
+
+const placeHolderChar = 'X';
 
 const spec = {
   description: [
@@ -45,6 +49,8 @@ const spec = {
   sizeRegex : sizeRegex.toString(),
   idsRegex  : idsRegex.toString(),
   bodyBelongsToRegex: bodyBelongsToRegex.toString(),
+  answerRegexComponent: answerRegexComponent.toString(),
+  placeHolderChar,
 }
 
 ///
@@ -272,14 +278,68 @@ function parseCluesIds( clues, errors ){
 }
 
 ///
-// loop over clues, processing the answers
+// loop over clues, processing the answers,
+// to establish
+// - length of this clue block (even if part of a bigger one)
+// - length of full answer (if owns others)
+// - parts[text, length, separatorToPrevPart]
 ///
 
 function parseCluesAnswers( clues, errors ){
 
-  clues.forEach( clue => {
+  // loop over clues which don't own
+  Object.keys(clues).forEach( id => {
+    Object.keys(clues[id]).forEach( direction => {
+      const clue = clues[id][direction];
+      if (clue.owns.length > 0) { return; }
+      const answer = {
+        parts : [],
+      };
+      clue.answer = answer;
+      // pick off first part, then all remaining parts with separators
+      // const answerSeparators = ',-|'.split();
+      // const escapedAnswerSeparators = ',\-\|'.split();
+      // const wordOrNumberRegexComponent = `(?:\\d+|[A-Z]+)`;
 
-  })
+      const matchedFirstPart = clue.raw.answerText.match(`^(${wordOrNumberRegexComponent})(.*)$`);
+      if (!matchedFirstPart) {
+        errors.push(`failed to parse first part of answer in clue [${clue.id}][${clue.direction}], answerText='${clue.raw.answerText}'`);
+      } else {
+        const [,firstPart, remainingPart] = matchedFirstPart;
+        answer.parts.push({ source : firstPart })
+        const remainingPartsRegex = new RegExp(`([${escapedAnswerSeparators.join()}])(${wordOrNumberRegexComponent})`, 'g');
+        let matchReminingPart;
+        while (matchReminingPart = remainingPartsRegex.exec(remainingPart)) {
+          const [ , separator, wordOrNumber ] = matchReminingPart;
+          answer.parts.push({
+            source : wordOrNumber,
+            separator
+          });
+        }
+
+        // complete parsing of the parts
+        answer.parts.forEach( part => {
+          if (part.source.match(/\d+/)) {
+            part.length = parseInt(part.source, 10);
+            part.text = placeHolderChar.repeat(part.length);
+            part.placeholder = true;
+          } else {
+            part.length = part.source.length;
+            part.text = part.source;
+            part.placeholder = false;
+          }
+        });
+
+        answer.length = answer.parts.reduce( (sum, part) => sum + part.length, 0); // add up the part lengths
+      }
+    });
+  });
+
+  // loop over clues which do own
+  // - check sizes of owned clues
+  // - calc the delta parts that must belong to the owning clue
+  // - calc the owned clue's answer
+  // - calc the owned clue's combined answer
 
   return {
   }
@@ -309,7 +369,12 @@ function innerParse( parsing ){
   if (parsing.errors.length !== 0) { return parsing; }
 
   parseCluesIds( parsing.clues, parsing.errors );
+  if (parsing.errors.length !== 0) { return parsing; }
+
+  parseCluesAnswers( parsing.clues, parsing.errors );
+  if (parsing.errors.length !== 0) { return parsing; }
   // parseCluesAnswers - to get length for each clue's answers, and separators overal, and for each clue
+
   // checkAnswersFitInDimensions
 
   return parsing;
