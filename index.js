@@ -142,6 +142,7 @@ function parseAcrossAndDownLines( acrossList, downList, errors ){
   [ ['across', acrossList], ['down', downList] ].forEach( directionPair => {
     const [direction, clueTexts] = directionPair;
     // loop over the clues for this direction
+    let prevIdInt = 0;
     clueTexts.forEach( (clueText, c) => {
       const matchedClue = clueText.match( clueRegex );
       if (!matchedClue) {
@@ -149,6 +150,12 @@ function parseAcrossAndDownLines( acrossList, downList, errors ){
       } else {
         const [,acrossText,downText,idsText,bodyText,answerText] = matchedClue;
         const id = idsText.split(/\D+/)[0];
+        const idInt = parseInt(id,10);
+        if (prevIdInt > idInt) {
+          errors.push(`clue[${id}][${direction}] out of id order, in line='${clueText}'`);
+        }
+        prevIdInt = idInt;
+
         if (!clues.hasOwnProperty(id)) {
           clues[id] = {}; // NB, the id is converted to a string when used as an object key.
         }
@@ -406,13 +413,13 @@ function parseCluesAnswers( clues, errors ){
     });
   });
 
-
   return {
   }
 }
 
 ///
 // loop over all the clues and ensure the answers fit within the grid
+// - and that they are in correct sequence of coords
 ///
 
 function checkAnswersFitInDimensions( clues, dimensions, errors ){
@@ -471,6 +478,11 @@ function innerParse( parsing ){
   if (parsing.errors.length !== 0) { return parsing; }
 
   checkAnswersFitInDimensions( parsing.clues, parsing.dimensions, parsing.errors );
+  if (parsing.errors.length !== 0) { return parsing; }
+
+  // calcCellConnectivity
+  // - calculate the how each cell in the grid, and in the answers connects to 0,1,2 clues,
+  //   creating the main data structure for constructing the web display view
 
   return parsing;
 }
