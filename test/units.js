@@ -403,24 +403,12 @@ test( 'crosswordDataFormat.parse fn - list handling (i.e. across and down)', ass
       expected: true,
        context: {response}
     });
+    assert.same({
+           msg: `clue[1][across].answer.length===12`,
+        actual: response.clues['1'].across.answer.length === 12,
+      expected: true,
+       context: {response}
+    });
   }
-  // {
-  //   const headerLines = specHeadersMinusAcrossAndDown
-  //   .concat(['across:'])
-  //   .concat([`- (1,1) 1,2 down,3 down. An Across clue (5,4,3)`])
-  //   .concat(['down:'])
-  //   .concat(['- (3,1) 2. See 1 Across (4)'])
-  //   .concat(['- (5,1) 3. See 1 Across (3)']);
-  //   const response = crosswordDataFormat.parse(headerLines.join("\n"));
-  //   assert.same({
-  //          msg: `clue[1][across].answer.length===12`,
-  //       actual: response.isValid===true
-  //            && response.clues && response.clues['1'].across && response.clues['1'].across.answer
-  //            && response.clues['1'].across.answer.length === 12,
-  //     expected: true,
-  //      context: {response}
-  //   });
-  // }
-
 
 });

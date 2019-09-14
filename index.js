@@ -287,20 +287,16 @@ function parseCluesIds( clues, errors ){
 
 function parseCluesAnswers( clues, errors ){
 
-  // loop over clues which don't own
+  // loop over all clues to calc answer parts, ignoring ownership for now
   Object.keys(clues).forEach( id => {
     Object.keys(clues[id]).forEach( direction => {
       const clue = clues[id][direction];
-      if (clue.owns.length > 0) { return; }
+      // if (clue.owns.length > 0) { return; }
       const answer = {
         parts : [],
       };
       clue.answer = answer;
       // pick off first part, then all remaining parts with separators
-      // const answerSeparators = ',-|'.split();
-      // const escapedAnswerSeparators = ',\-\|'.split();
-      // const wordOrNumberRegexComponent = `(?:\\d+|[A-Z]+)`;
-
       const matchedFirstPart = clue.raw.answerText.match(`^(${wordOrNumberRegexComponent})(.*)$`);
       if (!matchedFirstPart) {
         errors.push(`failed to parse first part of answer in clue [${clue.id}][${clue.direction}], answerText='${clue.raw.answerText}'`);
